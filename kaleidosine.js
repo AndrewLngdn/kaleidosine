@@ -1,0 +1,5 @@
+var morie = {
+	init: function(){
+		
+	}
+}
