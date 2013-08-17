@@ -6,7 +6,7 @@ var Kaleidosine = {
 	init: function(){
 		Kaleidosine.audioContext = new webkitAudioContext();
 		var scene = Kaleidosine.scene = new THREE.Scene();
-		var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+		var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.01, 1000);
 		var renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		document.body.appendChild(renderer.domElement);
@@ -23,7 +23,7 @@ var Kaleidosine = {
 		// var line = new THREE.Line(lineGeometry, lineMaterial);
 		// scene.add(line);
 
-		Kaleidosine.placeCubes(2);
+		Kaleidosine.placeCubes(8);
 
 		count = 0;
 		var render = function (){
@@ -31,8 +31,8 @@ var Kaleidosine = {
 			Kaleidosine.drawCornerLines();
 			scene.updateMatrixWorld();
 
-			if (count++ == 10)
-				return;
+			// if (count++ == 1)
+				// return;
 			requestAnimationFrame(render);
 			renderer.render(scene, camera);
 		}
@@ -41,70 +41,59 @@ var Kaleidosine = {
 
 	placeCubes: function(n){
 		for (var i = 0; i < n; i++){
-			var geometry = new THREE.CubeGeometry(10,10,0.1);
+			var geometry = new THREE.CubeGeometry(10,10,0);
 			var material = new THREE.MeshBasicMaterial({color: 0x000000});
 			var cube = new THREE.Mesh(geometry, material);
 
 			Kaleidosine.rectangles.push(cube);
 			Kaleidosine.scene.add(cube);
 
-			var geo = new THREE.Geometry();
-			var lineMaterial = new THREE.LineBasicMaterial({color: 0x330033, size: 10});
-			geo.vertices.push(new THREE.Vector3(0,0,5));
-			geo.vertices.push(new THREE.Vector3(0,0,5));
-			var line = new THREE.Line(geo, lineMaterial);
 
-			Kaleidosine.lines.push(line);
-			Kaleidosine.scene.add(line);
+			for (var j = 0; j < 4; j++ ){
+				var geo = new THREE.Geometry();
+				var lineMaterial = new THREE.LineBasicMaterial({color: 0x1BA8E0, size: 10});
+				geo.vertices.push(new THREE.Vector3(0,0,0));
+				geo.vertices.push(new THREE.Vector3(0,0,0));
+				var line = new THREE.Line(geo, lineMaterial);
+				Kaleidosine.lines.push(line);
+				Kaleidosine.scene.add(line);
+			} 
+			console.log(Kaleidosine.lines.length);
+
 
 		}
 	},
 
 	fanCubes: function(){
-		for (var i = 0; i < Kaleidosine.rectangles.length; i++){
-			Kaleidosine.rectangles[i].rotation.z += (0.005*(i+1));
+		var length = Kaleidosine.rectangles.length
+		for (var i = 0; i < length; i++){
+			Kaleidosine.rectangles[i].rotation.z += (0.005*(i+1))/length*2.5;
 		}
 	},
 
 	drawCornerLines: function(){
 
-
-		// var box = Kaleidosine.rectangles[0].geometry.computeBoundingBox();
-		// Kaleidosine.rectangles[0].updateMatrixWorld();
-		var box = Kaleidosine.rectangles[0].matrixWorld;
-		// console.log(Kaleidosine.rectangles[0].geometry.boundingBox);
-		// var vert = Kaleidosine.rectangles[0].geometry.vertices[0];
-		// var vert1 = Kaleidosine.rectangles[0].geometry.vertices[1];
-		// var x1 = Kaleidosine.rectangles[0].geometry.vertices[0].x;
-		// var y1 = Kaleidosine.rectangles[0].geometry.vertices[0].y;
-
-		// var x2 = Kaleidosine.rectangles[1].geometry.vertices[0].x;
-		// var y2 = Kaleidosine.rectangles[1].geometry.vertices[0].y;
-		var line = Kaleidosine.lines[0];
-		var corner1 = Kaleidosine.rectangles[0];//.geometry.vertices[0];
-		// var corner2 = line.geometry.vertices[0];
-		corner1.applyMatrix( box );
-		console.log(corner1.geometry.vertices[0]);
-		// end.applyMatrix( object.matrixWorld );
-
-		// line
-		// console.log(x1);
-
-		// var vector = new THREE.Vector3();
-		// vector.getPositionFromMatrix( vert.matrixWorld );
-
-		// console.log(Kaleidosine.rectangles[0].localToWorld(Kaleidosine.rectangles[0].position.clone()));
-		// console.log(Kaleidosine.rectangles[0].localToWorld(vert1));
-		// var vector1 = line.geometry.vertices[0];
-		// var vector2 = line.geometry.vertices[2];
-		// var v1 = v
-		// line.geometry.vertices[0].x = x1;
-		// line.geometry.vertices[0].y = y1;
-		// line.geometry.vertices[1].x = x2;
-		// line.geometry.vertices[1].y = y2;
-		line.geometry.verticesNeedUpdate = true;
+		var lineCount = 0;
+		for (var i = 0; i < (Kaleidosine.rectangles.length - 1); i++){
+			var thisBox = Kaleidosine.rectangles[i];
+			var nextBox = Kaleidosine.rectangles[i+1];
 
 
+			for (var j = 0; j < 4; j++){
+				var line = Kaleidosine.lines[lineCount];
+
+				lineCount++;
+				var thisCorner = thisBox.geometry.vertices[j].clone();
+				var nextCorner = nextBox.geometry.vertices[j].clone();
+				thisBox.localToWorld(thisCorner);
+				nextBox.localToWorld(nextCorner);
+				line.geometry.vertices[0] = thisCorner;
+				line.geometry.vertices[1] = nextCorner;
+				line.geometry.vertices[1].z = line.geometry.vertices[0].z = 0.001;
+
+				line.geometry.verticesNeedUpdate = true;
+			}
+		}
 	}
 }
 
